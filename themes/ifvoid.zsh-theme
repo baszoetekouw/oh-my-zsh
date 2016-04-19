@@ -5,13 +5,14 @@ PROMPT='
 ╭╴$(_user_host)${_current_dir}$(_user_custom)$(_task_info) $(git_prompt_info) $(_ruby_version)
 ╰─%{$fg[$CARETCOLOR]%}▶%{$resetcolor%} '
 
-PROMPT2='%{$fg[$CARETCOLOR]%}◀%{$reset_color%} '
+PROMPT2='%F{$CARETCOLOR]}◀%f '
 
-RPROMPT='$(_vi_status)%{$(echotc UP 1)%}$(_git_time_since_commit) $(git_prompt_status) ${_return_status}%{$(echotc DO 1)%}'
+RPROMPT='${_job_status}$(_vi_status)%{$(echotc UP 1)%}$(_git_time_since_commit) $(git_prompt_status) ${_return_status}%{$(echotc DO 1)%}'
 
 local _current_dir="%{$fg_bold[blue]%}%3~%{$reset_color%} "
-local _return_status="%{$fg_bold[red]%}%(?..⍉)%{$reset_color%}"
-local _hist_no="%{$fg[grey]%}%h%{$reset_color%}"
+local _return_status='%F{9}%(?..⍉:%?)%f'
+local _hist_no="%F{7}%h%f"
+local _job_status="%(1j:%F{6}«%j»%f:)"
 
 function _current_dir() {
 	local _max_pwd_length="65"
@@ -39,11 +40,18 @@ function _user_custom() {
 
 function _task_info() {
 	if [ -e ${HOME}/.taskrc ]; then
+		_t_color="11"
 		_context=$(task _get rc.context)
 		_context=${_context:-none}
 		_t_due=$(task +PENDING +DUE count)
+		_t_overdue=$(task +PENDING +OVERDUE count)
 		_t_pending=$(task +PENDING +next count)
-		echo " [%{$fg[yellow]%}${_context}:${_t_due}d,${_t_pending}n%{$reset_color%}]"
+		if [[ $_t_overdue -eq 0 ]]; then
+			_tt_overdue=''
+		else
+			_tt_overdue="%F{9}${_t_overdue}o%F{$_t_color},"
+		fi
+		echo " [%F{$_t_color}${_context}:%F{red}${_tt_overdue}%F{$_t_color}${_t_due}d,${_t_pending}n%f]"
 	fi
 }
 
